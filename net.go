@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -73,14 +74,34 @@ func printConn(cnt int64, start time.Time, old int64) (time.Time, int64) {
 
 	return start, old
 }
+
+func parseArgs(args []string) net.TCPAddr {
+	var addr net.TCPAddr
+	length := len(args)
+	if length >= 2 {
+		if args[1] != "" {
+			addr.IP = net.ParseIP(args[1])
+		}
+		if length > 2 {
+			if args[2] != "" && args[2] != "0" {
+				addr.Port, _ = strconv.Atoi(args[2])
+			}
+		}
+	}
+	return addr
+}
+
+// Args as IP and port to listen on
 func main() {
 	const listenPort = 2000
 	const protocol = "tcp"
 	var addr net.TCPAddr
 	var cnt, old int64
-	// Listen on TCP port 2000 on all interfaces.
-	//l, err := net.Listen("tcp", ":"+listenPort)
-	addr.Port = listenPort
+
+	addr = parseArgs(os.Args)
+	if addr.Port == 0 {
+		addr.Port = listenPort
+	}
 	l, err := net.ListenTCP(protocol, &addr)
 	if err != nil {
 		log.Fatal(err)
